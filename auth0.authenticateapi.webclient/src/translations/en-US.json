@@ -1,0 +1,20 @@
+{
+    "label-hello" : "Hello",
+    "label-change-language":"Change language",
+    "label-welcome":"Welcome to Auth0 POC",
+    "label-login":"Login",
+    "label-signup":"Sign up",
+    "label-click-to-login":"Click below to login",
+    "label-click-to-signup":"Click below to singup",
+    "label-username":"User name",
+    "label-user-email":"User email",
+    "label-private-one-component":"This is private Test 1 component",
+    "label-private-two-component":"This is private Test 2 component",
+    "label-private-nested-one-component":"This is private Nested Test1 component",
+    "label-private-nested-two-component":"This is private Nested Test 2  component",
+    "label-go-to-private-one-component":"Go to private Test 1 component",
+    "label-go-to-private-two-component":"Go to private Test 2 component",
+    "label-go-to-private-nested-one-component":" Go to private Nested Test 1 component",
+    "label-go-to-private-nested-two-component":"Go to private Nested Test 2 component",
+    "label-nested-routing":"Nested routing"
+}
