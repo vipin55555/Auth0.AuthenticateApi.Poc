@@ -1,12 +1,13 @@
-import { useAuth0 } from "@auth0/auth0-react";
+
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { useAuth } from "../../providers";
 
 export interface IAppFrameProps {
     children: React.ReactNode;
 }
 const AppFrame = (props: IAppFrameProps) => {
-    const { isAuthenticated } = useAuth0();
+    const { isAuthenticated } = useAuth();
 
     return (<>{isAuthenticated ?
         <div>

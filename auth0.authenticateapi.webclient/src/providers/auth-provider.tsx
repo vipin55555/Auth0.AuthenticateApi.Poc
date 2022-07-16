@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, useReducer } from "react"
+import { createContext, useContext, useState, useEffect, useReducer, ComponentType } from "react"
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { core } from '../constants';
 
-const AuthContext = createContext({
+
+const AuthContext = createContext<any>({
     isAuthenticated: false,
     isLoading: false,
     error: undefined,
@@ -11,10 +12,10 @@ const AuthContext = createContext({
     getAccessToken: () => { },
     login: () => { },
     logout: () => { },
+    withAuthenticationRequired:(component: ComponentType)=>{}
 });
 
-
-const AuthProvider = (props:any) => {
+ const AuthProvider = (props:any) => {
     const apiBasePath = process.env.REACT_APP_API_BASE_PATH;
     const [state, dispatch] = useReducer(auth0Reducer, {
         isAuthenticated: false,
@@ -47,7 +48,7 @@ const AuthProvider = (props:any) => {
      * 
      */
     const getUser = async () => {
-        const resp = await callApi({
+        const resp = await hitApi({
             url: `${apiBasePath}auth/getUser`,
             method: 'get',
             accessToken: getAccessToken() || ""
@@ -72,7 +73,7 @@ const AuthProvider = (props:any) => {
      */
     const getTokenFromApi = async (authorize_code:string) => {
         dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_STARTED })
-        const resp = await callApi({
+        const resp = await hitApi({
             url: `${apiBasePath}auth/accessToken?authorize_code=${authorize_code}`,
             method: 'get',
         });
@@ -89,7 +90,7 @@ const AuthProvider = (props:any) => {
      * 
      */
     const logout = () => {
-        localStorage.clear();
+        sessionStorage.clear();
         generateAuth0AuthorizationUrl();
         dispatch({ type: core.constants.auth0.LOGOUT });
     }
@@ -99,18 +100,51 @@ const AuthProvider = (props:any) => {
      * 
      */
     const getAccessToken = () => {
-        return localStorage.getItem("access_token") || "";
+        return sessionStorage.getItem("access_token") || "";
     }
 
-    const contextValue = {
+    /**
+     * 
+     * @param component 
+     * @returns 
+     */
+     const withAuthenticationRequired = (component: ComponentType) => {
+         if (state.isAuthenticated) {
+             return component;
+         } else {
+             logout();
+         }
+     }
+
+    /**
+     * 
+     * @param request 
+     * @returns 
+     */
+    const hitApi = async (request:any) => {
+        try {
+            const resp = await axios({
+                url: request.url,
+                method: request.method,
+                data: request.data || null,
+                // headers: { Authorization: request?.accessToken ? ("Bearer " + request?.accessToken) : "", ActiveSubTenantId: getActiveSubTenantIdFromSession() || "" },
+                params: request.params
+            });
+            return resp.data
+        } catch (error) {
+        }
+    }
+
+    const contextValue:any = {
         ...state,
         getAccessToken,
         login: generateAuth0AuthorizationUrl,
         logout,
+        withAuthenticationRequired
     };
 
     return (<AuthContext.Provider value={contextValue}>{props?.children}</AuthContext.Provider>)
-}
+};
 
 export const auth0Reducer = (state:any, action:any) => {
     switch (action.type) {
@@ -121,8 +155,8 @@ export const auth0Reducer = (state:any, action:any) => {
                 isLoading: true,
             };
         case core.constants.auth0.GET_ACCESS_TOKEN_COMPLETE:
-            localStorage.setItem("access_token", action?.payload?.access_token || "");
-            localStorage.setItem("id_token", action?.payload?.id_token || "");
+            sessionStorage.setItem("access_token", action?.payload?.access_token || "");
+            sessionStorage.setItem("id_token", action?.payload?.id_token || "");
             return {
                 ...state,
                 isAuthenticated: true,
@@ -164,5 +198,5 @@ export const auth0Reducer = (state:any, action:any) => {
     }
 }
 
-export { AuthProvider }
-export const useAuth0 = () => useContext(AuthContext);
+export {AuthProvider}
+export const useAuth = () => useContext(AuthContext);

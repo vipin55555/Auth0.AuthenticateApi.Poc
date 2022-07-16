@@ -1,13 +1,14 @@
-import { useAuth0 } from "@auth0/auth0-react";
+
 import { Outlet, useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../providers";
 
 const PrivateTest1 = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
-    const {user} = useAuth0();
+    const {user} = useAuth();
 
     console.log('PrivateTest1 location', JSON.stringify(location.state)); // Some additional passed in state during navigation from prev component
 

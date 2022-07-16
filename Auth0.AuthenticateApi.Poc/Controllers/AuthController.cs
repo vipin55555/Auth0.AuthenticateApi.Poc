@@ -21,7 +21,7 @@ namespace Auth0.AuthenticationApi.Api.Controllers {
         [HttpGet("AuthorizationUrl")]
         public async Task<IActionResult> GenerateAuth0AuthorizationUrl() {
             try {
-                return Ok(this._authService.GenerateAuth0AuthorizationUrl());
+                return Redirect(this._authService.GenerateAuth0AuthorizationUrl());
 
             } catch (Exception) {
                 throw;
