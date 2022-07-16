@@ -361,4 +361,3 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-/Auth0.AuthenticateApi.WebClient/.env
