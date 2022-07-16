@@ -64,5 +64,20 @@ namespace Auth0.AuthenticationApi.Api.Services {
                 throw;
             }
         }
+
+        /// <summary>
+        /// In this method simply return true as token is authenticated in middleware
+        /// </summary>
+        /// <returns></returns>
+        public bool ValidateToken() {
+            try {
+
+                return true;
+
+            } catch (Exception) {
+
+                throw;
+            }
+        }
     }
 }

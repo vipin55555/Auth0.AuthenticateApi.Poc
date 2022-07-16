@@ -23,9 +23,9 @@ const Header = (props: any) => {
                 <option value="hin">{t('label-hindi')}</option>
             </select>
             <br />
-            <h3>{t('label-click-to-login"')}</h3>
+            <h3>{t('label-click-to-logout')}</h3>
             <button onClick={() =>logout()}
-            >{t('label-login')}</button>
+            >{t('label-logout')}</button>
         </div>
     )
 }

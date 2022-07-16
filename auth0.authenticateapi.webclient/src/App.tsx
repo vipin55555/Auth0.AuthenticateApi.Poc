@@ -8,9 +8,7 @@ import { AppFrame } from './components'; // Frame component
 import { AppRoute } from './routes/AppRoute'; // Routing either public/private using 'react-router', 'react-router-dom' packages
 
 const App = () => {
-
-
-  return (
+    return (
     <Suspense fallback='Loading ..'>
       <AppFrame>
         <AppRoute />

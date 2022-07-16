@@ -1,4 +1,5 @@
 ﻿using Auth0.AuthenticationApi.Api.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace Auth0.AuthenticationApi.Api.Controllers {
         /// </summary>
         /// <returns></returns>
         [HttpGet("AuthorizationUrl")]
-        public async Task<IActionResult> GenerateAuth0AuthorizationUrl() {
+        public IActionResult GenerateAuth0AuthorizationUrl() {
             try {
                 return Redirect(this._authService.GenerateAuth0AuthorizationUrl());
 
@@ -38,6 +39,22 @@ namespace Auth0.AuthenticationApi.Api.Controllers {
 
             try {
                 return Ok(await this._authService.GetAuth0AccessToken(authorize_code));
+
+            } catch (Exception) {
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// It will simply return true if token is authenticated in middleware
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("ValidateToken")]
+        [Authorize("Bearer")]
+        public IActionResult ValidateToken() {
+            try {
+                return Ok(this._authService.ValidateToken());
 
             } catch (Exception) {
 

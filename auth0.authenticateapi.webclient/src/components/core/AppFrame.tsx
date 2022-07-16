@@ -7,18 +7,19 @@ export interface IAppFrameProps {
     children: React.ReactNode;
 }
 const AppFrame = (props: IAppFrameProps) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isTokenValidated } = useAuth();
 
-    return (<>{isAuthenticated ?
-        <div>
+    if (isAuthenticated && isTokenValidated) {
+        return (<div>
             <Header />
             <br />
             <Sidebar />
             <br />
             {props.children}
-        </div> :
-        <div>{props.children}</div>
-    }</>)
+        </div>)
+    } else {
+        return <div></div>
+    }
 }
 
 export { AppFrame }

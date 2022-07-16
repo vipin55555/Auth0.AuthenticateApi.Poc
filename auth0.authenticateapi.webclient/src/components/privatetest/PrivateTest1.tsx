@@ -2,26 +2,16 @@
 import { Outlet, useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../providers";
 
 const PrivateTest1 = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
-    const {user} = useAuth();
 
     console.log('PrivateTest1 location', JSON.stringify(location.state)); // Some additional passed in state during navigation from prev component
 
     return (<div>
         <h1>{t('label-private-one-component')}</h1>
-        <img src={user?.picture|| ''} alt="User profile pic"/>
-        <br />
-        <p>{t('label-username')}: {user?.name}</p>
-        <p>{t('label-user-email')}: {user?.email}</p>
-        <br />
-        <div>
-            {JSON.stringify(user,null,2)}
-        </div>
         <br />
         <div><button onClick={() => navigate('/privateTest2', {replace:true})}> {t('label-go-to-private-two-component')}</button></div>
         <br />

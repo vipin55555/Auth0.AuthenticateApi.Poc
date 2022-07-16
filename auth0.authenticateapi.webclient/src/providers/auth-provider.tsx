@@ -8,60 +8,54 @@ const AuthContext = createContext<any>({
     isAuthenticated: false,
     isLoading: false,
     error: undefined,
-    user: null,
+    isTokenValidated: false,
     getAccessToken: () => { },
     login: () => { },
-    logout: () => { },
-    withAuthenticationRequired:(component: ComponentType)=>{}
+    logout: () => { }
 });
 
- const AuthProvider = (props:any) => {
+const AuthProvider = (props: any) => {
     const apiBasePath = process.env.REACT_APP_API_BASE_PATH;
     const [state, dispatch] = useReducer(auth0Reducer, {
         isAuthenticated: false,
         isLoading: false,
         error: undefined,
-        user: null,
+        isTokenValidated: false
     });
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
 
     useEffect(() => {
+        // Auth0Redirect url contains code(authorize_code).So if both code and access token in session is not available 
+        // then get Auth0 Redirect Url from backend server
         if (!(searchParams.get("code") || "") && !getAccessToken()) {
             generateAuth0AuthorizationUrl();
-        } else if ((searchParams.get("code") || "") && (searchParams.get("state") || "") && !getAccessToken()) {
+        }
+        // If code and state is available but token is no available in session then get access token 
+        // by sending code(received from Auth0 Redirect Url) to backend server
+        else if ((searchParams.get("code") || "") && (searchParams.get("state") || "") && !getAccessToken()) {
             searchParams.set("state", "");
             setSearchParams(searchParams);
             getTokenFromApi(searchParams.get("code") || "");
-        } else if (getAccessToken()) {
-            dispatch({ type: core.constants.auth0.USER_AUTHENTICATED });
+        }
+        // If token is already available in session then proceed further 
+        else if (getAccessToken()) {
+            dispatch({ type: core.constants.auth0.IS_TOKEN_VALIDATED });
         }
     }, [location]);
 
+    /**
+     * If token is available, we can validate it with our backend server
+     */
     useEffect(() => {
-        if (state.isAuthenticated && !state.user) {
-            getUser();
+        if (state.isAuthenticated && !state.isTokenValidated) {
+            validateToken();
         }
     }, [state?.isAuthenticated]);
 
-    /**
-     * 
-     */
-    const getUser = async () => {
-        const resp = await hitApi({
-            url: `${apiBasePath}auth/getUser`,
-            method: 'get',
-            accessToken: getAccessToken() || ""
-        });
-        if (resp.status === core.constants.OP_SUCCESS) {
-            dispatch({ type: core.constants.auth0.GET_USER_COMPLETE, payload: resp.data });
-        } else {
-            dispatch({ type: core.constants.auth0.ERROR, payload: resp.err_data });
-        }
-    }
 
     /**
-     * 
+     * Get Auth0 redirect url from backend server
      */
     const generateAuth0AuthorizationUrl = () => {
         dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_STARTED })
@@ -69,84 +63,88 @@ const AuthContext = createContext<any>({
     }
 
     /**
-     * 
+     * Get token from backend server by sending code to backend server
      */
-    const getTokenFromApi = async (authorize_code:string) => {
-        dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_STARTED })
-        const resp = await hitApi({
-            url: `${apiBasePath}auth/accessToken?authorize_code=${authorize_code}`,
-            method: 'get',
-        });
-        searchParams.set("code", "");
-        setSearchParams(searchParams);
-        if (resp.status === core.constants.OP_SUCCESS) {
-            dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_COMPLETE, payload: resp.data });
-        } else {
-            dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_FAILED, payload: resp.err_data });
+    const getTokenFromApi = async (authorize_code: string) => {
+        try {
+            dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_STARTED })
+            const resp = await hitApi({
+                url: `${apiBasePath}auth/accessToken?authorize_code=${authorize_code}`,
+                method: 'get',
+            });
+            searchParams.set("code", "");
+            setSearchParams(searchParams);
+            dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_COMPLETE, payload: resp });
+        } catch (error: any) {
+            dispatch({ type: core.constants.auth0.GET_ACCESS_TOKEN_FAILED, payload: error?.response?.data });
         }
     }
 
     /**
-     * 
+     *  If token is available, we can validate it with our backend server
+    */
+    const validateToken = async () => {        
+        try {
+            const resp = await hitApi({
+                url: `${apiBasePath}auth/validateToken`,
+                method: 'get',
+                accessToken: getAccessToken() || ""
+            });
+            dispatch({ type: core.constants.auth0.VALIDATE_TOKEN_COMPLETE, payload: resp });
+        } catch (error: any) {
+            dispatch({ type: core.constants.auth0.ERROR, payload: error?.response?.data });
+        }
+    }
+
+
+    /**
+     * Clear session and generate new auth0 redirect url
      */
     const logout = () => {
-        sessionStorage.clear();
+        localStorage.clear();
         generateAuth0AuthorizationUrl();
         dispatch({ type: core.constants.auth0.LOGOUT });
     }
 
 
     /**
-     * 
+     * Get access token from session
      */
     const getAccessToken = () => {
-        return sessionStorage.getItem("access_token") || "";
+        return localStorage.getItem("accessToken") || "";
     }
 
     /**
-     * 
-     * @param component 
-     * @returns 
-     */
-     const withAuthenticationRequired = (component: ComponentType) => {
-         if (state.isAuthenticated) {
-             return component;
-         } else {
-             logout();
-         }
-     }
-
-    /**
-     * 
+     * Communicate to backend server by using this method to hit API
      * @param request 
      * @returns 
      */
-    const hitApi = async (request:any) => {
+    const hitApi = async (request: any) => {
         try {
             const resp = await axios({
                 url: request.url,
                 method: request.method,
                 data: request.data || null,
-                // headers: { Authorization: request?.accessToken ? ("Bearer " + request?.accessToken) : "", ActiveSubTenantId: getActiveSubTenantIdFromSession() || "" },
+                headers: { Authorization: request?.accessToken ? ("Bearer " + request?.accessToken) : "" },
                 params: request.params
             });
-            return resp.data
+            return resp.data;
         } catch (error) {
+            throw error;
         }
     }
 
-    const contextValue:any = {
+    const contextValue: any = {
         ...state,
         getAccessToken,
         login: generateAuth0AuthorizationUrl,
-        logout,
-        withAuthenticationRequired
+        logout
     };
 
     return (<AuthContext.Provider value={contextValue}>{props?.children}</AuthContext.Provider>)
 };
 
-export const auth0Reducer = (state:any, action:any) => {
+export const auth0Reducer = (state: any, action: any) => {
     switch (action.type) {
         case core.constants.auth0.GET_ACCESS_TOKEN_STARTED:
             return {
@@ -155,8 +153,8 @@ export const auth0Reducer = (state:any, action:any) => {
                 isLoading: true,
             };
         case core.constants.auth0.GET_ACCESS_TOKEN_COMPLETE:
-            sessionStorage.setItem("access_token", action?.payload?.access_token || "");
-            sessionStorage.setItem("id_token", action?.payload?.id_token || "");
+            localStorage.setItem("accessToken", action?.payload?.accessToken || "");
+            localStorage.setItem("idToken", action?.payload?.idToken || "");
             return {
                 ...state,
                 isAuthenticated: true,
@@ -167,25 +165,26 @@ export const auth0Reducer = (state:any, action:any) => {
                 ...state,
                 isAuthenticated: false,
                 isLoading: false,
-                user: null,
+                isTokenValidated: false,
                 error: action?.payload,
             };
-        case core.constants.auth0.USER_AUTHENTICATED:
+        case core.constants.auth0.IS_TOKEN_VALIDATED:
             return {
                 ...state,
-                isAuthenticated: true
+                isAuthenticated: true,
+                isTokenValidated: true
             };
-        case core.constants.auth0.GET_USER_COMPLETE:
+        case core.constants.auth0.VALIDATE_TOKEN_COMPLETE:
             return {
                 ...state,
-                user: action?.payload
+                isTokenValidated: true
             };
         case core.constants.auth0.LOGOUT:
             return {
                 ...state,
                 isAuthenticated: false,
                 isLoading: false,
-                user: null,
+                isTokenValidated: false,
             };
         case core.constants.auth0.ERROR:
             return {
@@ -198,5 +197,5 @@ export const auth0Reducer = (state:any, action:any) => {
     }
 }
 
-export {AuthProvider}
+export { AuthProvider }
 export const useAuth = () => useContext(AuthContext);
