@@ -1,5 +1,5 @@
 # Auth0.AuthenticateApi.Poc
-It's a simple *.net core web API with web client i.e. React project* using [Auth0 Authenticate API](https://auth0.com/docs/api/authentication) i.e. handle login, logout, redirection,etc. with the help of Auth0 in backend.
+It's a simple **.net core web API with web client i.e. React** project using [Auth0 Authenticate API](https://auth0.com/docs/api/authentication) i.e. handle login, logout, redirection,etc. with the help of Auth0 in backend.
 
 # Reference
 Refer this awesome [article](https://auth0.com/blog/exploring-auth0-aspnet-core-authentication-sdk/)
